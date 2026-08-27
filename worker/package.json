@@ -1,0 +1,29 @@
+{
+  "name": "dreamwebapp-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DreamWebApp Cloudflare Workers API — Hono + Drizzle + D1 + KV",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "npm run db:migrate:remote && wrangler deploy",
+    "deploy:worker-only": "wrangler deploy",
+    "cf-typegen": "wrangler types --strict-vars false",
+    "typecheck": "wrangler types --strict-vars false && tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply dreamwebapp-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply dreamwebapp-db --remote",
+    "db:studio": "drizzle-kit studio",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.38.4",
+    "hono": "^4.6.20",
+    "libphonenumber-js": "^1.13.11",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.30.4",
+    "typescript": "~5.7.3",
+    "wrangler": "^4.125.0"
+  }
+}

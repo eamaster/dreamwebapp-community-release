@@ -1,0 +1,48 @@
+{
+  "name": "dreamwebapp",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AI Chatbots & Automation Marketing Site - React + Vite + TypeScript",
+  "author": "DreamWebApp",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:worker": "npm test --prefix worker",
+    "test:all": "npm test && npm run test:worker",
+    "typecheck": "tsc -b --noEmit",
+    "db:migrate:local": "npm run db:migrate:local --prefix worker",
+    "db:migrate:remote": "npm run db:migrate:remote --prefix worker",
+    "deploy:worker": "npm run deploy --prefix worker"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-query-devtools": "^5.101.4",
+    "libphonenumber-js": "^1.13.11",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.10.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.22",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.125.0"
+  }
+}

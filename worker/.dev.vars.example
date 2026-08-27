@@ -1,0 +1,44 @@
+# ==============================================================================
+# Worker Local Development Secrets (Wrangler dev only)
+# ==============================================================================
+# Copy to worker/.dev.vars (gitignored) before running `npm run dev` in worker/.
+#
+# IMPORTANT: Never commit .dev.vars or real credentials.
+# For production deployment, set secrets via: npx wrangler secret put SECRET_NAME
+
+# ── Admin & Customer Auth / JWT ───────────────────────────────────────────────
+# Required for signing auth JWTs locally:
+JWT_SECRET=replace-with-a-random-32-plus-character-secret
+
+# ── Email (Resend) — optional ─────────────────────────────────────────────────
+# Set to enable password-reset & verification emails locally:
+# RESEND_API_KEY=re_replace_me
+# RESEND_FROM_EMAIL="DreamWebApp <no-reply@yourdomain.com>"
+
+# ── NOWPayments Crypto Checkout — optional ─────────────────────────────────────
+# Obtain from: https://nowpayments.io/merchant-settings/api
+# NOWPAYMENTS_API_KEY=replace_me
+# NOWPAYMENTS_IPN_SECRET=replace_me
+
+# Optional sandbox override (defaults to production if omitted):
+# NOWPAYMENTS_API_BASE_URL=https://api-sandbox.nowpayments.io/v1
+
+# Payment currency settings (defaults: usd / account default):
+# PAYMENT_PRICE_CURRENCY=usd
+# PAYMENT_OUTCOME_CURRENCY=
+
+# IPN callback URL for receiving payment status webhooks:
+# PAYMENT_IPN_CALLBACK_URL=https://<your-tunnel-or-domain>/api/v1/webhooks/nowpayments
+
+# Customer redirect URLs after payment:
+PAYMENT_SUCCESS_URL=http://localhost:5173/payment/return
+PAYMENT_CANCEL_URL=http://localhost:5173/payment/return
+
+# ── Customer OAuth Integrations — optional ────────────────────────────────────
+# CUSTOMER_AUTH_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+# CUSTOMER_AUTH_GOOGLE_CLIENT_SECRET=replace_me
+# CUSTOMER_AUTH_GOOGLE_REDIRECT_URI=http://localhost:5173/api/v1/auth/oauth/google/callback
+
+# CUSTOMER_AUTH_X_CLIENT_ID=your-x-client-id
+# CUSTOMER_AUTH_X_CLIENT_SECRET=replace_me
+# CUSTOMER_AUTH_X_REDIRECT_URI=http://localhost:5173/api/v1/auth/oauth/x/callback

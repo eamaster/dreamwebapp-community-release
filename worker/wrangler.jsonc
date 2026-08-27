@@ -1,0 +1,109 @@
+/**
+ * Cloudflare Workers configuration for DreamWebApp API (Community Edition)
+ * Edge CMS, customer accounts, and backend data layer.
+ *
+ * For local development:
+ *   npx wrangler dev
+ *
+ * For deploying to your own Cloudflare account:
+ *   1. Create D1 database: `npx wrangler d1 create dreamwebapp-db`
+ *   2. Create KV namespace: `npx wrangler kv:namespace create CONTENT_KV`
+ *   3. Create R2 bucket: `npx wrangler r2 bucket create dreamwebapp-logos`
+ *   4. Update the database_id and kv id fields below or use `wrangler.jsonc.local`
+ */
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "dreamwebapp-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-23",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "account_id": "your-cloudflare-account-id",
+  "keep_vars": true,
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "invocation_logs": true,
+      "head_sampling_rate": 1
+    }
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dreamwebapp-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CONTENT_KV",
+      "id": "00000000000000000000000000000000",
+      "preview_id": "00000000000000000000000000000001"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "LOGO_ASSETS",
+      "bucket_name": "your-r2-bucket-name"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "vars": {
+    "CORS_ORIGIN": "http://localhost:5173,https://yourdomain.com",
+    "PUBLIC_APP_ORIGIN": "http://localhost:5173",
+    "ENVIRONMENT": "development"
+  },
+
+  "env": {
+    "production": {
+      "routes": [
+        {
+          "pattern": "api.yourdomain.com",
+          "custom_domain": true,
+          "zone_name": "yourdomain.com"
+        }
+      ],
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "invocation_logs": true,
+          "head_sampling_rate": 1
+        }
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "dreamwebapp-db",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CONTENT_KV",
+          "id": "00000000000000000000000000000000"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "LOGO_ASSETS",
+          "bucket_name": "your-r2-bucket-name"
+        }
+      ],
+      "ai": {
+        "binding": "AI"
+      },
+      "vars": {
+        "CORS_ORIGIN": "https://yourdomain.com,https://www.yourdomain.com",
+        "PUBLIC_APP_ORIGIN": "https://yourdomain.com",
+        "COOKIE_DOMAIN": "yourdomain.com",
+        "ENVIRONMENT": "production"
+      }
+    }
+  }
+}
