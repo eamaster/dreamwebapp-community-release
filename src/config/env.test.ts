@@ -58,6 +58,12 @@ describe('Environment API Base URL Validation', () => {
                 getValidatedApiBaseUrl('not-a-valid-url', true)
             ).toThrow(/Invalid VITE_API_BASE_URL format/);
         });
+
+        it('requires an operator-supplied API origin instead of a built-in host', () => {
+            expect(() => getValidatedApiBaseUrl('', true)).toThrow(
+                /VITE_API_BASE_URL is required for production/
+            );
+        });
     });
 
     describe('Development environment (isProd = false)', () => {

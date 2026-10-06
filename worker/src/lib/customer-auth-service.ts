@@ -322,6 +322,30 @@ export function getAuthCapabilities(env: Env): { google: boolean; x: boolean; em
     };
 }
 
+/**
+ * OAuth redirect URIs are operator configuration. A missing value fails closed
+ * instead of substituting a built-in host.
+ */
+function requireOAuthRedirectUri(env: Env, configured: string | undefined, name: string): string {
+    const raw = configured?.trim() ?? '';
+    if (!raw) {
+        throw new Error(`${name} is not configured.`);
+    }
+    let parsed: URL;
+    try {
+        parsed = new URL(raw);
+    } catch {
+        throw new Error(`${name} is not a valid absolute URL.`);
+    }
+    if (parsed.username || parsed.password) {
+        throw new Error(`${name} must not include credentials.`);
+    }
+    if (env.ENVIRONMENT === 'production' && parsed.protocol !== 'https:') {
+        throw new Error(`${name} must use HTTPS in production.`);
+    }
+    return raw;
+}
+
 export async function startOAuthFlow(
     env: Env,
     provider: 'google' | 'x',
@@ -357,7 +381,11 @@ export async function startOAuthFlow(
         if (!env.CUSTOMER_AUTH_GOOGLE_CLIENT_ID) {
             throw new Error('Google OAuth is not configured in this environment.');
         }
-        const redirectUri = env.CUSTOMER_AUTH_GOOGLE_REDIRECT_URI || 'https://dreamwebapp.com/api/v1/auth/oauth/google/callback';
+        const redirectUri = requireOAuthRedirectUri(
+            env,
+            env.CUSTOMER_AUTH_GOOGLE_REDIRECT_URI,
+            'CUSTOMER_AUTH_GOOGLE_REDIRECT_URI',
+        );
         const params = new URLSearchParams({
             client_id: env.CUSTOMER_AUTH_GOOGLE_CLIENT_ID,
             redirect_uri: redirectUri,
@@ -373,7 +401,11 @@ export async function startOAuthFlow(
         if (!env.CUSTOMER_AUTH_X_CLIENT_ID) {
             throw new Error('X OAuth is not configured in this environment.');
         }
-        const redirectUri = env.CUSTOMER_AUTH_X_REDIRECT_URI || 'https://dreamwebapp.com/api/v1/auth/oauth/x/callback';
+        const redirectUri = requireOAuthRedirectUri(
+            env,
+            env.CUSTOMER_AUTH_X_REDIRECT_URI,
+            'CUSTOMER_AUTH_X_REDIRECT_URI',
+        );
         const params = new URLSearchParams({
             client_id: env.CUSTOMER_AUTH_X_CLIENT_ID,
             redirect_uri: redirectUri,
@@ -420,7 +452,11 @@ export async function handleOAuthCallback(
     let providerAvatar: string | null = null;
 
     if (provider === 'google') {
-        const redirectUri = env.CUSTOMER_AUTH_GOOGLE_REDIRECT_URI || 'https://dreamwebapp.com/api/v1/auth/oauth/google/callback';
+        const redirectUri = requireOAuthRedirectUri(
+            env,
+            env.CUSTOMER_AUTH_GOOGLE_REDIRECT_URI,
+            'CUSTOMER_AUTH_GOOGLE_REDIRECT_URI',
+        );
         const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -462,7 +498,11 @@ export async function handleOAuthCallback(
         providerName = profile.name ?? null;
         providerAvatar = profile.picture ?? null;
     } else if (provider === 'x') {
-        const redirectUri = env.CUSTOMER_AUTH_X_REDIRECT_URI || 'https://dreamwebapp.com/api/v1/auth/oauth/x/callback';
+        const redirectUri = requireOAuthRedirectUri(
+            env,
+            env.CUSTOMER_AUTH_X_REDIRECT_URI,
+            'CUSTOMER_AUTH_X_REDIRECT_URI',
+        );
         const basicAuth = btoa(`${env.CUSTOMER_AUTH_X_CLIENT_ID}:${env.CUSTOMER_AUTH_X_CLIENT_SECRET}`);
         const tokenRes = await fetch('https://api.twitter.com/2/oauth2/token', {
             method: 'POST',

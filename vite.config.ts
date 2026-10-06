@@ -7,7 +7,12 @@ function validateEnvPlugin(): Plugin {
     name: 'validate-env',
     config(_, { mode }) {
       const isProd = mode === 'production';
-      const rawUrl = process.env.VITE_API_BASE_URL;
+      const rawUrl = process.env.VITE_API_BASE_URL?.trim();
+      if (isProd && !rawUrl) {
+        throw new Error(
+          '[build] VITE_API_BASE_URL is required for production builds. Set it to your HTTPS API origin.'
+        );
+      }
       if (rawUrl) {
         let parsed: URL;
         try {

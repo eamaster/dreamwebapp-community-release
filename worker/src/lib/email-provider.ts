@@ -58,6 +58,61 @@ export async function sendPasswordResetEmail(
     }
 }
 
+/**
+ * Sends the customer password-reset email. Never logs the reset URL, token,
+ * or recipient. The caller must pass an operator-configured app origin.
+ */
+export async function sendCustomerPasswordResetEmail(
+    env: Env,
+    to: string,
+    resetUrl: string
+): Promise<EmailSendResult> {
+    if (!isEmailProviderConfigured(env)) {
+        return { ok: false, reason: 'not_configured' };
+    }
+
+    try {
+        const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                from: env.RESEND_FROM_EMAIL,
+                to,
+                subject: 'Reset your DreamWebApp password',
+                html: renderCustomerResetEmailHtml(resetUrl),
+            }),
+        });
+
+        if (!res.ok) {
+            console.error('[email-provider] Resend API returned a non-OK status for customer reset', res.status);
+            return { ok: false, reason: 'send_failed' };
+        }
+
+        return { ok: true };
+    } catch (err) {
+        console.error('[email-provider] Failed to send customer password reset email:', err instanceof Error ? err.message : 'Unknown error');
+        return { ok: false, reason: 'send_failed' };
+    }
+}
+
+function renderCustomerResetEmailHtml(resetUrl: string): string {
+    return `
+        <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto;">
+            <p>We received a request to reset the password for your account.</p>
+            <p>
+                <a href="${resetUrl}" style="display:inline-block;background:#4f46e5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+                    Reset your password
+                </a>
+            </p>
+            <p>This link expires in 1 hour and can only be used once.</p>
+            <p>If you didn't request this, you can safely ignore this email — your password will not be changed.</p>
+        </div>
+    `.trim();
+}
+
 function renderResetEmailHtml(resetUrl: string): string {
     return `
         <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto;">

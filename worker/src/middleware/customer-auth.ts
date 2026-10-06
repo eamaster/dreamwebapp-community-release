@@ -109,10 +109,10 @@ export function getValidatedCookieDomain(env: Partial<Env>): string | undefined 
  *
  * Cookie architecture:
  * 1. Session cookie: HttpOnly, Secure in production, SameSite=Lax.
- *    No Domain attribute → host-only to api.dreamwebapp.com. Least privilege.
+ *    No Domain attribute → host-only to the API hostname. Least privilege.
  *
  * 2. Legacy CSRF expiration: Max-Age=0, no Domain.
- *    Expires any pre-existing host-only dreamwebapp_csrf cookie at api.dreamwebapp.com
+ *    Expires any pre-existing host-only CSRF cookie on the API host
  *    that may have been set by a prior Worker version before domain-scoping was added.
  *    This is permanently harmless when no legacy cookie exists.
  *

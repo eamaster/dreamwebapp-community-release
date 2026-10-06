@@ -51,7 +51,7 @@ import {
     createEmailVerificationToken,
     getCanonicalAppOrigin,
 } from '../lib/customer-auth-service';
-import { sendCustomerVerificationEmail } from '../lib/email-provider';
+import { isEmailProviderConfigured, sendCustomerPasswordResetEmail, sendCustomerVerificationEmail } from '../lib/email-provider';
 import { hashPassword } from '../middleware/auth';
 
 export const customerAuthRouter = new Hono<{ Bindings: Env; Variables: CustomerHonoVariables }>();
@@ -309,31 +309,24 @@ customerAuthRouter.post('/password-reset/request', async (c) => {
             createdAt: now.toISOString(),
         });
 
-        // Email delivery via Resend (if provisioned)
-        if (c.env.RESEND_API_KEY && c.env.RESEND_FROM_EMAIL) {
+        // Email delivery uses the operator-configured app origin. Never fall back
+        // to a built-in host, and never log the reset URL or token.
+        if (isEmailProviderConfigured(c.env) && user.email) {
             try {
-                const resetUrl = `https://dreamwebapp.com/reset-password?token=${rawToken}`;
-                await fetch('https://api.resend.com/emails', {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${c.env.RESEND_API_KEY}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        from: c.env.RESEND_FROM_EMAIL,
-                        to: [user.email!],
-                        subject: 'Reset your DreamWebApp password',
-                        html: `<p>Hello,</p><p>You requested a password reset. Click the link below to set a new password:</p><p><a href="${resetUrl}">Reset Password</a></p><p>This link expires in 1 hour.</p>`,
-                    }),
-                });
+                const origin = getCanonicalAppOrigin(c.env, c.req.header('origin'));
+                const resetUrl = `${origin}/reset-password?token=${encodeURIComponent(rawToken)}`;
+                await sendCustomerPasswordResetEmail(c.env, user.email, resetUrl);
             } catch (resendErr) {
-                console.error('[auth/password-reset] Failed to dispatch email:', resendErr);
+                console.error(
+                    '[auth/password-reset] Failed to dispatch email:',
+                    resendErr instanceof Error ? resendErr.message : 'send failed',
+                );
             }
         }
     }
 
     // Generic response to avoid account enumeration
-    const message = c.env.RESEND_API_KEY
+    const message = isEmailProviderConfigured(c.env)
         ? 'If an account with that email exists, password reset instructions have been sent.'
         : 'If an account with that email exists, a password reset request was recorded. Note: email delivery is not configured in this environment.';
 

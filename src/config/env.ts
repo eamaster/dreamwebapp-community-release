@@ -48,13 +48,15 @@ export function getValidatedApiBaseUrl(
     rawInput?: string,
     isProdEnv: boolean = import.meta.env.PROD
 ): string {
-    const rawUrl =
-        rawInput !== undefined
-            ? rawInput
-            : (import.meta.env.VITE_API_BASE_URL || (isProdEnv ? 'https://api.dreamwebapp.com' : 'http://localhost:8787'));
+    const provided = rawInput !== undefined ? rawInput : import.meta.env.VITE_API_BASE_URL;
+    const trimmed = typeof provided === 'string' ? provided.trim() : '';
+    // Production must use an operator-supplied origin. There is no built-in host.
+    const rawUrl = trimmed || (isProdEnv ? '' : 'http://localhost:8787');
 
-    if (!rawUrl || typeof rawUrl !== 'string') {
-        throw new Error('[env] VITE_API_BASE_URL must be a non-empty string.');
+    if (!rawUrl) {
+        throw new Error(
+            '[env] VITE_API_BASE_URL is required for production. Set it to your HTTPS API origin.'
+        );
     }
 
     let parsed: URL;
