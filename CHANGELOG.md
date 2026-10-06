@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - Replaced the setup guide with self-hosting instructions for this repository.
 - Documented that GitHub Actions runs checks only. Deployment stays opt-in on the operator's own Cloudflare account.
-- Noted that this repository does not yet include a selected `LICENSE` file.
+- Licensed the community edition under Apache License 2.0.
 
 ## [0.1.0] - 2026-08-27
 

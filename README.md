@@ -6,7 +6,9 @@ This is not a hosted service, and the checks in this repository do not deploy an
 
 ## License
 
-This repository does not currently include a `LICENSE` file. `LICENSE-CHOICE.md` records that choosing a license is an open maintainer decision. Nothing in this repository grants you a license to the code, the DreamWebApp name, or the bundled sample copy. Do not treat the sample pages as your terms of service or privacy policy.
+The code in this repository is licensed under the Apache License, Version 2.0. See `LICENSE` and `NOTICE`.
+
+That license does not grant rights in the DreamWebApp name. The bundled sample pages are not your terms of service or privacy policy.
 
 ## What is included
 
