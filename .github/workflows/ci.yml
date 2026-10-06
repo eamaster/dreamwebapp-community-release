@@ -39,3 +39,7 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Reserved example origin so CI does not need operator credentials
+          # and does not point a production bundle at a preset host.
+          VITE_API_BASE_URL: https://api.example.com

@@ -131,7 +131,7 @@ function createMockD1(rows: Record<string, unknown[]> = {}): D1Database {
 function createTestEnv(overrides: Partial<Env> = {}): Env {
     return {
         ENVIRONMENT: 'test',
-        CORS_ORIGIN: 'https://dreamwebapp.com',
+        CORS_ORIGIN: 'https://example.com',
         JWT_SECRET: 'test-jwt-secret-min-32-chars-long-example',
         DB: createMockD1(),
         LOGO_ASSETS: undefined as unknown as R2Bucket,
@@ -957,7 +957,7 @@ describe('Admin Payments Observability API & Security Suite', () => {
         return signJWT(
             {
                 sub: '1',
-                email: 'admin@dreamwebapp.com',
+                email: 'admin@example.com',
                 role,
                 iat: now,
                 exp: now + 3600,
@@ -969,7 +969,7 @@ describe('Admin Payments Observability API & Security Suite', () => {
 
     const mockAdminUser = {
         id: 1,
-        email: 'admin@dreamwebapp.com',
+        email: 'admin@example.com',
         password_hash: '$2a$12$eXampleHash...',
         role: 'super_admin',
         is_active: 1,
@@ -1235,7 +1235,7 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                 },
                 body: JSON.stringify({
                     planKey: 'starter-bot',
@@ -1263,7 +1263,7 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
             headers: {
                 'Content-Type': 'application/json',
                 Cookie: 'dreamwebapp_session=some_session_token',
-                Origin: 'https://dreamwebapp.com',
+                Origin: 'https://example.com',
                 // Missing X-CSRF-Token header
             },
             body: JSON.stringify({
@@ -1304,7 +1304,7 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                     Cookie: `dreamwebapp_session=${auth.sessionToken}; dreamwebapp_csrf=${auth.csrfToken}`,
                     'X-CSRF-Token': auth.csrfToken,
                 },
@@ -1351,7 +1351,7 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Origin: 'https://dreamwebapp.com',
+                Origin: 'https://example.com',
                 Cookie: `dreamwebapp_session=${auth.sessionToken}; dreamwebapp_csrf=${auth.csrfToken}`,
                 'X-CSRF-Token': auth.csrfToken,
             },
@@ -1387,8 +1387,8 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
                 list: async () => ({ keys: [], list_complete: true, caret: undefined }),
                 getWithMetadata: async () => ({ value: null, metadata: null }),
             } as unknown as KVNamespace,
-            PAYMENT_SUCCESS_URL: 'https://dreamwebapp.com/payment/return',
-            PAYMENT_CANCEL_URL: 'https://dreamwebapp.com/payment/return',
+            PAYMENT_SUCCESS_URL: 'https://example.com/payment/return',
+            PAYMENT_CANCEL_URL: 'https://example.com/payment/return',
         });
 
         const originalFetch = globalThis.fetch;
@@ -1420,7 +1420,7 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                     Cookie: `dreamwebapp_session=${auth.sessionToken}; dreamwebapp_csrf=${auth.csrfToken}`,
                     'X-CSRF-Token': auth.csrfToken,
                 },

@@ -26,8 +26,8 @@ Thank you for your interest in contributing to DreamWebApp! We welcome issues, b
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-org/dreamwebapp-community.git
-   cd dreamwebapp-community
+   git clone https://github.com/eamaster/dreamwebapp-community-release.git
+   cd dreamwebapp-community-release
    ```
 
 2. **Install dependencies**:

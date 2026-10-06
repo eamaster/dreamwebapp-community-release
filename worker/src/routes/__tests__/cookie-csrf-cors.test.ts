@@ -23,10 +23,10 @@ const BASE_ENV: Env = {
     AI: {} as Ai,
     JWT_SECRET: 'test-jwt-secret-32-chars-long!!!',
     RESEND_API_KEY: 're_mock_000000000000000000000000000',
-    RESEND_FROM_EMAIL: 'DreamWebApp <no-reply@dreamwebapp.com>',
-    CORS_ORIGIN: 'https://dreamwebapp.com,https://www.dreamwebapp.com',
-    PUBLIC_APP_ORIGIN: 'https://dreamwebapp.com',
-    COOKIE_DOMAIN: 'dreamwebapp.com',
+    RESEND_FROM_EMAIL: 'DreamWebApp <no-reply@example.com>',
+    CORS_ORIGIN: 'https://example.com,https://www.example.com',
+    PUBLIC_APP_ORIGIN: 'https://example.com',
+    COOKIE_DOMAIN: 'example.com',
     ENVIRONMENT: 'production',
 };
 
@@ -44,17 +44,17 @@ describe('§1 · getValidatedCookieDomain', () => {
     it('returns normalized domain in production', () => {
         expect(getValidatedCookieDomain({
             ENVIRONMENT: 'production',
-            COOKIE_DOMAIN: 'dreamwebapp.com',
-            CORS_ORIGIN: 'https://dreamwebapp.com,https://www.dreamwebapp.com',
-        })).toBe('dreamwebapp.com');
+            COOKIE_DOMAIN: 'example.com',
+            CORS_ORIGIN: 'https://example.com,https://www.example.com',
+        })).toBe('example.com');
     });
 
     it('strips leading dot from COOKIE_DOMAIN value', () => {
         expect(getValidatedCookieDomain({
             ENVIRONMENT: 'production',
-            COOKIE_DOMAIN: '.dreamwebapp.com',
-            CORS_ORIGIN: 'https://dreamwebapp.com',
-        })).toBe('dreamwebapp.com');
+            COOKIE_DOMAIN: '.example.com',
+            CORS_ORIGIN: 'https://example.com',
+        })).toBe('example.com');
     });
 
     it('throws when COOKIE_DOMAIN is missing in production', () => {
@@ -84,8 +84,8 @@ describe('§1 · getValidatedCookieDomain', () => {
         // Localhost / non-HTTPS origins are not subject to domain cross-validation
         expect(() => getValidatedCookieDomain({
             ENVIRONMENT: 'production',
-            COOKIE_DOMAIN: 'dreamwebapp.com',
-            CORS_ORIGIN: 'https://dreamwebapp.com,http://localhost:5173',
+            COOKIE_DOMAIN: 'example.com',
+            CORS_ORIGIN: 'https://example.com,http://localhost:5173',
         })).not.toThrow();
     });
 });
@@ -143,7 +143,7 @@ describe('§2 · setCustomerCookies and clearCustomerCookies', () => {
             expect(domainCsrf).not.toContain('HttpOnly');
             expect(domainCsrf).toContain('Secure');
             expect(domainCsrf).toContain('SameSite=Lax');
-            expect(domainCsrf).toContain('Domain=dreamwebapp.com');
+            expect(domainCsrf).toContain('Domain=example.com');
         });
     });
 
@@ -180,13 +180,13 @@ describe('§2 · setCustomerCookies and clearCustomerCookies', () => {
             expect(legacy).toContain('Max-Age=0');
         });
 
-        it('domain-scoped CSRF expiry carries Domain=dreamwebapp.com', () => {
+        it('domain-scoped CSRF expiry carries Domain=example.com', () => {
             const { c, getHeaders } = makeContextStub();
             clearCustomerCookies(c, true);
             const csrfHeaders = getHeaders().filter((h) => h.startsWith(`${CSRF_COOKIE_NAME}=`));
             const scoped = csrfHeaders.find((h) => h.includes('Domain='));
             expect(scoped).toBeTruthy();
-            expect(scoped).toContain('Domain=dreamwebapp.com');
+            expect(scoped).toContain('Domain=example.com');
             expect(scoped).toContain('Max-Age=0');
         });
 
@@ -210,14 +210,14 @@ describe('§3 · CORS preflight', () => {
             new Request('http://localhost/api/v1/auth/me', {
                 method: 'OPTIONS',
                 headers: {
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                     'Access-Control-Request-Method': 'GET',
                 },
             }),
             corsEnv,
         );
         expect(res.status).toBe(204);
-        expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://dreamwebapp.com');
+        expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://example.com');
         expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true');
         expect(res.headers.get('Vary')).toContain('Origin');
     });
@@ -227,14 +227,14 @@ describe('§3 · CORS preflight', () => {
             new Request('http://localhost/api/v1/auth/me', {
                 method: 'OPTIONS',
                 headers: {
-                    Origin: 'https://www.dreamwebapp.com',
+                    Origin: 'https://www.example.com',
                     'Access-Control-Request-Method': 'GET',
                 },
             }),
             corsEnv,
         );
         expect(res.status).toBe(204);
-        expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://www.dreamwebapp.com');
+        expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://www.example.com');
         expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true');
     });
 
@@ -270,7 +270,7 @@ describe('§4 · CSRF double-submit on /email-verification/resend', () => {
             new Request('http://localhost/api/v1/auth/email-verification/resend', {
                 method: 'POST',
                 headers: {
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                     Cookie: `${SESSION_COOKIE_NAME}=${encodeURIComponent(user.sessionToken)}; ${CSRF_COOKIE_NAME}=${encodeURIComponent(user.csrfToken)}`,
                 },
             }),
@@ -308,7 +308,7 @@ describe('§4 · CSRF double-submit on /email-verification/resend', () => {
                 new Request('http://localhost/api/v1/auth/email-verification/resend', {
                     method: 'POST',
                     headers: {
-                        Origin: 'https://dreamwebapp.com',
+                        Origin: 'https://example.com',
                         Cookie: `${SESSION_COOKIE_NAME}=${encodeURIComponent(user.sessionToken)}; ${CSRF_COOKIE_NAME}=${encodeURIComponent(user.csrfToken)}`,
                         'X-CSRF-Token': user.csrfToken,
                     },
@@ -334,7 +334,7 @@ describe('§4 · CSRF double-submit on /email-verification/resend', () => {
         const res = await app.fetch(
             new Request('http://localhost/api/v1/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Origin: 'https://dreamwebapp.com' },
+                headers: { 'Content-Type': 'application/json', Origin: 'https://example.com' },
                 body: JSON.stringify({ email: 'cookie-scope@example.com', password: 'Password123!' }),
             }),
             env,
@@ -353,7 +353,7 @@ describe('§4 · CSRF double-submit on /email-verification/resend', () => {
         const scopedCsrf = setCookies.find((c) => c.startsWith(`${CSRF_COOKIE_NAME}=`) && c.includes('Domain='));
         expect(scopedCsrf).toBeTruthy();
         expect(scopedCsrf).not.toContain('HttpOnly');
-        expect(scopedCsrf).toContain('Domain=dreamwebapp.com');
+        expect(scopedCsrf).toContain('Domain=example.com');
 
         // The legacy-expiry directive must have Max-Age=0 and no Domain
         const legacyExpiry = setCookies.find((c) => c.startsWith(`${CSRF_COOKIE_NAME}=`) && c.includes('Max-Age=0') && !c.includes('Domain='));

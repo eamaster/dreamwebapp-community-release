@@ -11,11 +11,11 @@
 export interface Env extends Cloudflare.Env {
     /** HS256 secret for signing/verifying admin JWTs. Set via: wrangler secret put JWT_SECRET */
     JWT_SECRET: string;
-    /** Canonical frontend origin, e.g. https://dreamwebapp.com. Used for verification & email links. */
-    PUBLIC_APP_ORIGIN?: string;
-    /** Canonical backend API origin, e.g. https://api.dreamwebapp.com */
+    /** Canonical frontend origin, e.g. https://app.example.com. Used for verification and email links. */
+    PUBLIC_APP_ORIGIN: string;
+    /** Canonical backend API origin, e.g. https://api.example.com */
     API_BASE_URL?: string;
-    /** Cookie domain for shared CSRF cookies across subdomains in production, e.g. dreamwebapp.com */
+    /** Cookie domain for shared CSRF cookies across subdomains in production, e.g. example.com */
     COOKIE_DOMAIN?: string;
     /**
      * Optional. Set via: wrangler secret put RESEND_API_KEY
@@ -60,20 +60,20 @@ export interface Env extends Cloudflare.Env {
 
     /**
      * Absolute URL NOWPayments will POST IPN updates to.
-     * Example: https://api.dreamwebapp.com/api/v1/webhooks/nowpayments
+     * Example: https://api.example.com/api/v1/webhooks/nowpayments
      * For local testing, use an ngrok/cloudflared HTTPS tunnel.
      */
     PAYMENT_IPN_CALLBACK_URL?: string;
 
     /**
      * URL the customer is redirected to after a successful payment.
-     * Example: https://dreamwebapp.com/payment/return
+     * Example: https://app.example.com/payment/return
      */
     PAYMENT_SUCCESS_URL?: string;
 
     /**
      * URL the customer is redirected to after cancelling payment.
-     * Example: https://dreamwebapp.com/payment/return
+     * Example: https://app.example.com/payment/return
      */
     PAYMENT_CANCEL_URL?: string;
 
@@ -83,14 +83,14 @@ export interface Env extends Cloudflare.Env {
     CUSTOMER_AUTH_GOOGLE_CLIENT_ID?: string;
     /** Google OAuth 2.0 Client Secret (set via wrangler secret put) */
     CUSTOMER_AUTH_GOOGLE_CLIENT_SECRET?: string;
-    /** Google OAuth 2.0 Redirect URI (e.g. https://dreamwebapp.com/api/v1/auth/oauth/google/callback) */
+    /** Google OAuth 2.0 Redirect URI (absolute URL on the operator's origin) */
     CUSTOMER_AUTH_GOOGLE_REDIRECT_URI?: string;
 
     /** X (Twitter) OAuth 2.0 Client ID */
     CUSTOMER_AUTH_X_CLIENT_ID?: string;
     /** X (Twitter) OAuth 2.0 Client Secret (set via wrangler secret put) */
     CUSTOMER_AUTH_X_CLIENT_SECRET?: string;
-    /** X (Twitter) OAuth 2.0 Redirect URI (e.g. https://dreamwebapp.com/api/v1/auth/oauth/x/callback) */
+    /** X (Twitter) OAuth 2.0 Redirect URI (absolute URL on the operator's origin) */
     CUSTOMER_AUTH_X_REDIRECT_URI?: string;
 }
 

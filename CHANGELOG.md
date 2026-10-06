@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Security
+- Production frontend builds require `VITE_API_BASE_URL` and do not fall back to a built-in API host.
+- Customer password-reset links use the operator-configured application origin.
+- Google and X OAuth redirect URIs must be configured explicitly. Missing values fail closed.
+
+### Documentation
+- Replaced the setup guide with self-hosting instructions for this repository.
+- Documented that GitHub Actions runs checks only. Deployment stays opt-in on the operator's own Cloudflare account.
+- Noted that this repository does not yet include a selected `LICENSE` file.
+
 ## [0.1.0] - 2026-08-27
 
 ### Added

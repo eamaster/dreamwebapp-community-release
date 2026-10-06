@@ -29,14 +29,17 @@ function createTestEnv(mockD1: D1Database, mockKV: KVNamespace): Env {
         LOGO_ASSETS: {} as R2Bucket,
         AI: {} as Ai,
         JWT_SECRET: 'test-admin-secret-which-is-at-least-32-chars-long!',
-        CORS_ORIGIN: 'https://dreamwebapp.com,https://www.dreamwebapp.com,http://localhost:5173',
+        CORS_ORIGIN: 'https://example.com,https://www.example.com,http://localhost:5173',
         ENVIRONMENT: 'development',
         RESEND_API_KEY: 'test-resend-api-key',
-        RESEND_FROM_EMAIL: 'no-reply@dreamwebapp.com',
+        RESEND_FROM_EMAIL: 'no-reply@example.com',
+        PUBLIC_APP_ORIGIN: 'https://example.com',
         CUSTOMER_AUTH_GOOGLE_CLIENT_ID: 'google-client-id.apps.googleusercontent.com',
         CUSTOMER_AUTH_GOOGLE_CLIENT_SECRET: 'google-client-secret',
+        CUSTOMER_AUTH_GOOGLE_REDIRECT_URI: 'http://localhost:8787/api/v1/auth/oauth/google/callback',
         CUSTOMER_AUTH_X_CLIENT_ID: 'x-client-id',
         CUSTOMER_AUTH_X_CLIENT_SECRET: 'x-client-secret',
+        CUSTOMER_AUTH_X_REDIRECT_URI: 'http://localhost:8787/api/v1/auth/oauth/x/callback',
     };
 }
 
@@ -229,7 +232,7 @@ describe('Customer Authentication & Account Subsystem', () => {
         it('rejects admin tokens on customer account routes', async () => {
             // Sign an admin JWT
             const adminToken = await signJWT(
-                { sub: '1', email: 'admin@dreamwebapp.com', role: 'super_admin', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
+                { sub: '1', email: 'admin@example.com', role: 'super_admin', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
                 env.JWT_SECRET,
             );
 
@@ -250,6 +253,9 @@ describe('Customer Authentication & Account Subsystem', () => {
             expect(authUrl).toContain('https://accounts.google.com/o/oauth2/v2/auth');
             expect(authUrl).toContain('code_challenge_method=S256');
             expect(authUrl).toContain(`state=${state}`);
+            expect(authUrl).toContain(
+                `redirect_uri=${encodeURIComponent('http://localhost:8787/api/v1/auth/oauth/google/callback')}`,
+            );
 
             const stateHash = await sha256Hex(state);
             const kvVal = await env.CONTENT_KV.get(`oauth:state:${stateHash}`);
@@ -258,6 +264,58 @@ describe('Customer Authentication & Account Subsystem', () => {
             expect(parsed.provider).toBe('google');
             expect(parsed.codeVerifier).toBeDefined();
             expect(parsed.returnTo).toBe('/account');
+        });
+
+        it('fails closed when the Google redirect URI is not configured', async () => {
+            const bare = { ...env, CUSTOMER_AUTH_GOOGLE_REDIRECT_URI: undefined };
+            await expect(startOAuthFlow(bare, 'google', '/account')).rejects.toThrow(
+                /CUSTOMER_AUTH_GOOGLE_REDIRECT_URI is not configured/,
+            );
+        });
+    });
+
+    describe('Customer password reset origin', () => {
+        it('emails a reset link on the operator app origin', async () => {
+            const drizzle = createDB(mockD1);
+            await registerCustomerWithPassword(drizzle, {
+                email: 'reset@example.com',
+                password: 'Password123!',
+            });
+
+            const bodies: string[] = [];
+            const originalFetch = globalThis.fetch;
+            globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+                const url = String(input);
+                if (url === 'https://api.resend.com/emails') {
+                    bodies.push(typeof init?.body === 'string' ? init.body : '');
+                    return new Response('{}', { status: 200 });
+                }
+                return originalFetch(input, init);
+            }) as typeof fetch;
+
+            try {
+                const res = await app.fetch(
+                    new Request('http://localhost/api/v1/auth/password-reset/request', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Origin: 'https://example.com',
+                        },
+                        body: JSON.stringify({ email: 'reset@example.com' }),
+                    }),
+                    env,
+                );
+                expect(res.status).toBe(200);
+                expect(bodies).toHaveLength(1);
+                const payload = JSON.parse(bodies[0]!) as { html?: string };
+                const hrefs = [...(payload.html ?? '').matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
+                expect(hrefs).toEqual([
+                    expect.stringMatching(/^https:\/\/example\.com\/reset-password\?token=/),
+                ]);
+                expect(new URL(hrefs[0]!).host).toBe('example.com');
+            } finally {
+                globalThis.fetch = originalFetch;
+            }
         });
     });
 
@@ -313,7 +371,7 @@ describe('Customer Authentication & Account Subsystem', () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                     Cookie: `dreamwebapp_session=${encodeURIComponent(cust.sessionToken)}; dreamwebapp_csrf=${encodeURIComponent(cust.csrfToken)}`,
                 },
                 body: JSON.stringify({ displayName: 'New Name' }),
@@ -326,7 +384,7 @@ describe('Customer Authentication & Account Subsystem', () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                     'X-CSRF-Token': 'wrong-csrf-token-value',
                     Cookie: `dreamwebapp_session=${encodeURIComponent(cust.sessionToken)}; dreamwebapp_csrf=${encodeURIComponent(cust.csrfToken)}`,
                 },
@@ -340,7 +398,7 @@ describe('Customer Authentication & Account Subsystem', () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                     'X-CSRF-Token': cust.csrfToken,
                     Cookie: `dreamwebapp_session=${encodeURIComponent(cust.sessionToken)}; dreamwebapp_csrf=${encodeURIComponent(cust.csrfToken)}`,
                 },
@@ -361,7 +419,7 @@ describe('Customer Authentication & Account Subsystem', () => {
             });
 
             const adminToken = await signJWT(
-                { sub: '1', email: 'admin@dreamwebapp.com', role: 'super_admin', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
+                { sub: '1', email: 'admin@example.com', role: 'super_admin', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
                 env.JWT_SECRET,
             );
 
@@ -390,7 +448,7 @@ describe('Customer Authentication & Account Subsystem', () => {
             });
 
             const adminToken = await signJWT(
-                { sub: '1', email: 'admin@dreamwebapp.com', role: 'super_admin', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
+                { sub: '1', email: 'admin@example.com', role: 'super_admin', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
                 env.JWT_SECRET,
             );
 
@@ -433,7 +491,7 @@ describe('Customer Authentication & Account Subsystem', () => {
     describe('9. Operational Schema Health Check', () => {
         it('verifies all required tables exist in D1 database', async () => {
             const adminToken = await signJWT(
-                { sub: '1', email: 'admin@dreamwebapp.com', role: 'super_admin', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
+                { sub: '1', email: 'admin@example.com', role: 'super_admin', iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
                 env.JWT_SECRET,
             );
 
@@ -514,7 +572,7 @@ describe('Customer Authentication & Account Subsystem', () => {
                     headers: {
                         Cookie: `dreamwebapp_session=${encodeURIComponent(reg.sessionToken)}; dreamwebapp_csrf=${encodeURIComponent(reg.csrfToken)}`,
                         'X-CSRF-Token': reg.csrfToken,
-                        Origin: 'https://dreamwebapp.com',
+                        Origin: 'https://example.com',
                     },
                 });
                 const res = await app.fetch(req, env);
@@ -553,7 +611,7 @@ describe('Customer Authentication & Account Subsystem', () => {
                 headers: {
                     Cookie: `dreamwebapp_session=${encodeURIComponent(reg.sessionToken)}; dreamwebapp_csrf=${encodeURIComponent(reg.csrfToken)}`,
                     'X-CSRF-Token': reg.csrfToken,
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                 },
             });
             const resDelete = await app.fetch(reqDelete, env);
@@ -607,7 +665,7 @@ describe('Customer Authentication & Account Subsystem', () => {
                 headers: {
                     Cookie: `dreamwebapp_session=${encodeURIComponent(reg.sessionToken)}; dreamwebapp_csrf=${encodeURIComponent(reg.csrfToken)}`,
                     'X-CSRF-Token': reg.csrfToken,
-                    Origin: 'https://dreamwebapp.com',
+                    Origin: 'https://example.com',
                 },
             });
             const resDelete = await app.fetch(reqDelete, env);
@@ -648,7 +706,7 @@ describe('Customer Authentication & Account Subsystem', () => {
 
             expect(res.status).toBe(302);
             const location = res.headers.get('Location');
-            expect(location).toBe('https://dreamwebapp.com/login?error=Sign%20in%20was%20cancelled%20or%20denied%20by%20provider.');
+            expect(location).toBe('https://example.com/login?error=Sign%20in%20was%20cancelled%20or%20denied%20by%20provider.');
         });
 
         it('redirects missing code/state to canonical frontend app origin /login', async () => {
@@ -658,7 +716,7 @@ describe('Customer Authentication & Account Subsystem', () => {
 
             expect(res.status).toBe(302);
             const location = res.headers.get('Location');
-            expect(location).toBe('https://dreamwebapp.com/login?error=Missing%20authorization%20code%20or%20state.');
+            expect(location).toBe('https://example.com/login?error=Missing%20authorization%20code%20or%20state.');
         });
     });
 });

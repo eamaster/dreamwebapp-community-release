@@ -134,7 +134,7 @@ const corruptedAssetRow = {
 function createTestEnv(overrides: Partial<Env> = {}): Env {
     return {
         ENVIRONMENT: 'test',
-        CORS_ORIGIN: 'https://dreamwebapp.com',
+        CORS_ORIGIN: 'https://example.com',
         JWT_SECRET: 'test-jwt-secret-min-32-chars-long-example',
         DB: createMockD1({
             media_assets: [validAssetRow, corruptedAssetRow],

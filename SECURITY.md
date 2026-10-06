@@ -21,7 +21,7 @@ Only the latest release on the `main` branch receives security updates.
 > **DO NOT** report security vulnerabilities via public GitHub issues, discussions, or pull requests.
 
 To report a vulnerability:
-1. Contact the maintainers privately via email: `security@example.com` *(or use GitHub Private Vulnerability Reporting once published)*.
+1. Contact the maintainers privately. The address `security@example.com` in this file is a placeholder until the maintainer publishes a real contact. GitHub Private Vulnerability Reporting can be used if the maintainer enables it.
 2. Include a detailed description of the issue:
    - Type of vulnerability (e.g. CSRF, XSS, SSRF, Auth bypass, Token validation).
    - Affected files, endpoints, and line numbers.

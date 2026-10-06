@@ -1,13 +1,13 @@
 # DreamWebApp Backend API (Cloudflare Worker)
 
-High-performance, edge-first Headless CMS and data layer for the DreamWebApp frontend, built on Cloudflare Workers, Hono.js, Drizzle ORM, Cloudflare D1 (Serverless SQLite), and Cloudflare KV.
+Headless CMS and data layer for the DreamWebApp frontend, built on Cloudflare Workers, Hono.js, Drizzle ORM, Cloudflare D1, and Cloudflare KV. Setup for this edition is documented in the repository root README. Deployment is opt-in and uses the operator's own Cloudflare account.
 
 ---
 
 ## 🏗️ Architecture & Features
 
-- **Runtime:** Native Cloudflare Workers (V8 isolates at 300+ edge locations).
-- **Web Framework:** [Hono.js](https://hono.dev/) v4 (ultra-fast, typed web framework).
+- **Runtime:** Cloudflare Workers.
+- **Web Framework:** [Hono.js](https://hono.dev/) v4.
 - **ORM & Database:** [Drizzle ORM](https://orm.drizzle.team/) + Cloudflare D1.
 - **Caching:** Multi-tier edge caching (Edge Cache-Control ➔ `CONTENT_KV` ➔ D1).
 - **Authentication:** Web Crypto API JWT (HS256) & PBKDF2-SHA256 password hashing (zero external crypto dependencies).
@@ -17,8 +17,8 @@ High-performance, edge-first Headless CMS and data layer for the DreamWebApp fro
 - **Legal Content:** CMS-editable, unpublished-by-default Privacy Policy / Terms of Service pages. See "Legal Pages" below.
 - **Validation:** Zod v3 schemas for all incoming write operations and submissions.
 - **Rate Limiting:** Sliding-window anti-spam rate limiter on lead submissions (`rl:ip:endpoint` stored in KV).
-- **Runtime:** Native Cloudflare Workers (V8 isolates at 300+ edge locations).
-- **Web Framework:** [Hono.js](https://hono.dev/) v4 (ultra-fast, typed web framework).
+- **Runtime:** Cloudflare Workers.
+- **Web Framework:** [Hono.js](https://hono.dev/) v4.
 - **ORM & Database:** [Drizzle ORM](https://orm.drizzle.team/) + Cloudflare D1 (Serverless SQLite).
 - **Caching:** Multi-tier edge caching (Edge Cache-Control ➔ `CONTENT_KV` ➔ D1).
 - **Admin Authentication:** Web Crypto API JWT (HS256) & PBKDF2-SHA256 password hashing.
