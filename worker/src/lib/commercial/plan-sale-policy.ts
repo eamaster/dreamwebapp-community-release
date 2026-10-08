@@ -102,8 +102,10 @@ export function evaluatePlanSale(input: PlanSaleInputs): PlanSaleDecision {
     }
 
     if (!hasPositivePayable) {
+        // Not publicly available: a plan without a positive payable amount must not
+        // appear as an offer on the public catalog (CMS-active alone is insufficient).
         return decision(planKey, 'no_payable_amount', 'Checkout would collect no payment', {
-            publicVisible: true,
+            publicVisible: false,
             checkoutAmountDecimal: amount,
         });
     }

@@ -57,12 +57,12 @@ describe('community plan-sale-policy', () => {
         expect(decision.code).toBe('not_in_catalog');
     });
 
-    it('keeps a plan publicly listed but not checkout-eligible when no positive payable amount exists', () => {
+    it('does not list a plan publicly when no positive payable amount exists', () => {
         const decision = evaluatePlanSale({
             planKey: 'starter-bot',
             planRow: planRow({ setupFee: null, monthlyPrice: 0 }),
         });
-        expect(decision.publicVisible).toBe(true);
+        expect(decision.publicVisible).toBe(false);
         expect(decision.checkoutEligible).toBe(false);
         expect(decision.code).toBe('no_payable_amount');
     });

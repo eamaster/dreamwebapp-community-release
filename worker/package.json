@@ -9,6 +9,7 @@
     "deploy:worker-only": "wrangler deploy",
     "cf-typegen": "wrangler types --strict-vars false",
     "typecheck": "wrangler types --strict-vars false && tsc --noEmit",
+    "typecheck:tsc": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply dreamwebapp-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply dreamwebapp-db --remote",

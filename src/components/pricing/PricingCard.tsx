@@ -35,10 +35,9 @@ function ongoingAccessDecimal(monthlyPrice: number): string | null {
  */
 export function PricingCard({ plan }: PricingCardProps) {
     const isCryptoSupported = isCryptoCheckoutSupported(plan.id);
-    const canCheckout = Boolean(isCryptoSupported && (plan.checkoutEligible ?? true));
+    const canCheckout = Boolean(isCryptoSupported && plan.checkoutEligible === true);
     const dueLabel = dueAtCheckoutLabel(plan);
     const ongoing = ongoingAccessDecimal(plan.monthlyPrice);
-    const setupWins = Number(plan.setupFee ?? 0) > 0;
 
     return (
         <Card
@@ -67,7 +66,7 @@ export function PricingCard({ plan }: PricingCardProps) {
                             <span className="text-5xl font-bold gradient-text">{dueLabel}</span>
                         </div>
                         <p className="text-sm text-slate-600 mt-2">Due at checkout (one-time)</p>
-                        {setupWins && ongoing && (
+                        {ongoing && (
                             <p className="text-sm text-slate-600 mt-1">
                                 Ongoing access {formatMoneyAmount(ongoing, CATALOG_DISPLAY_CURRENCY)}/month,
                                 arranged separately — not charged automatically.

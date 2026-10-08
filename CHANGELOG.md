@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Crypto checkout and public pricing now charge and display CMS-selected fees (positive setup/activation amount, otherwise monthly/access price). Deploy-time catalog seed amounts are never charged.
 - Public pricing listing applies a community sale policy so CMS-active alone does not imply public availability or checkout eligibility.
+- Plans without a positive payable CMS amount are not listed on the public catalog.
+- Frontend checkout CTAs require an explicit `checkoutEligible: true` from the API (fail closed when the field is absent).
 - Added reviewed `shared/` modules (`cms-checkout-amount`, `monetary-display`, `checkout-route`) with consistent `@shared` resolution for Vite, TypeScript, Vitest, and Wrangler.
 
 ### Security
@@ -24,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documented that GitHub Actions runs checks only. Deployment stays opt-in on the operator's own Cloudflare account.
 - Licensed the community edition under Apache License 2.0.
 - Documented CMS checkout-fee authority and the distinction between CMS active, public visibility, and checkout eligibility.
+- Rewrote `worker/README.md` and `CONTRIBUTING.md` for community edition accuracy; corrected OAuth local redirect examples; CI now runs worker `tsc`.
 
 ## [0.1.0] - 2026-08-27
 
@@ -53,5 +56,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Developer Experience & CI**:
   - End-to-end Vitest test suite covering API client, CSRF middleware, customer auth, and payments.
   - Strict TypeScript configuration across root and worker packages.
-  - ESLint configuration and Prettier code formatting.
+  - ESLint configuration (optional Prettier settings file may be present; Prettier is not a required CI script).
   - GitHub Actions CI workflow executing lint, typecheck, test, and build pipelines.

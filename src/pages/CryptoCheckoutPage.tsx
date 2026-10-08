@@ -70,7 +70,7 @@ export function CryptoCheckoutPage() {
     const canCheckoutPlan =
         isSupportedPlan &&
         Boolean(resolvedPlan) &&
-        (resolvedPlan?.checkoutEligible ?? true) &&
+        resolvedPlan?.checkoutEligible === true &&
         Boolean(resolvedPlan && dueAtCheckoutDisplay(resolvedPlan));
 
     // Group approved currencies into Popular Coins and Stablecoins

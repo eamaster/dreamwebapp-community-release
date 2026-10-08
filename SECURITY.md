@@ -10,8 +10,8 @@ Only the latest release on the `main` branch receives security updates.
 
 | Version | Supported |
 | :--- | :--- |
-| `0.1.x` / `main` | :white_check_mark: |
-| Older releases | :x: |
+| Latest `main` (package `1.0.0`; changelog series from `0.1.0`) | :white_check_mark: |
+| Older tagged releases | :x: |
 
 ---
 

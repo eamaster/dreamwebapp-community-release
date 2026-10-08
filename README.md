@@ -84,15 +84,12 @@ There is no default administrator password. Until you insert an administrator ro
 ```bash
 npm run lint
 npm run typecheck
+npm run typecheck:tsc --prefix worker
 npm run test:all
 VITE_API_BASE_URL=https://api.example.com npm run build
 ```
 
-`npm run typecheck` covers the frontend TypeScript project. The Worker project is checked with:
-
-```bash
-npm run typecheck --prefix worker
-```
+`npm run typecheck` covers the frontend TypeScript project (including frontend unit tests under `src/`). The Worker application sources are checked with `npm run typecheck:tsc --prefix worker` (Worker `__tests__` are run by Vitest and are not included in that `tsc` project).
 
 A production frontend build requires `VITE_API_BASE_URL` and rejects non-HTTPS values, embedded credentials, paths, queries, and `workers.dev` hosts. CI sets `https://api.example.com` for that build. For your own deployment, set the variable to your API origin.
 
@@ -100,7 +97,7 @@ Worker tests use in-memory mocks. They do not need Cloudflare credentials or a l
 
 ## Routes
 
-Frontend routes include `/`, `/services`, `/solutions`, `/pricing`, `/about`, `/contact`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/account`, `/privacy-policy`, `/terms-of-service`, `/checkout/crypto`, `/payment/return`, `/admin/login`, and `/admin`.
+Frontend routes include `/`, `/services`, `/solutions`, `/pricing`, `/about`, `/contact`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/account`, `/privacy-policy`, `/terms-of-service`, `/checkout`, `/checkout/crypto`, `/payment/return`, `/admin/login`, `/admin/forgot-password`, `/admin/reset-password`, `/admin/verify-email-change`, and `/admin`.
 
 API routes include:
 
@@ -126,7 +123,9 @@ Leave a provider unset if you do not use it.
 - X sign-in: `CUSTOMER_AUTH_X_CLIENT_ID`, `CUSTOMER_AUTH_X_CLIENT_SECRET`, and `CUSTOMER_AUTH_X_REDIRECT_URI`
 - Chat: the `AI` binding in `worker/wrangler.jsonc`
 
-`PUBLIC_APP_ORIGIN` is the frontend origin used in email links and redirects. Set it to your site. Customer password reset and OAuth do not substitute a built-in host.
+`PUBLIC_APP_ORIGIN` is the frontend origin used in email links and redirects. In production, set it to your HTTPS site origin; password-reset and OAuth flows do not fall back to a built-in hosted brand. Outside production, an unset value may fall back to `http://localhost:5173` for local development only.
+
+Shared CMS/checkout helpers live under `shared/` and are imported as `@shared/*` from both the frontend and the Worker. See `worker/README.md` for Worker-specific fee and sale-policy notes. Plans sold via crypto checkout must also exist in the static community catalog (`starter-bot`, `growth-bot`, `pro-automation`); custom CMS-only plans are not publicly listed until an operator ships a matching catalog entry.
 
 ## Deploying on your account
 
