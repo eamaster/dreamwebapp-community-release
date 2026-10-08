@@ -19,6 +19,10 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  // Resolve shared frontend/worker modules during Wrangler bundling.
+  "alias": {
+    "@shared": "../shared"
+  },
   "account_id": "your-cloudflare-account-id",
   "keep_vars": true,
   "observability": {

@@ -20,7 +20,7 @@ The checked-in application includes:
 - Customer sessions stored as httpOnly cookies, with a CSRF double-submit cookie and Zod validation on writes.
 - Optional Resend email for password reset and address verification. When it is not configured, those flows report that email is unavailable instead of pretending a message was sent.
 - Optional Google and X sign-in. Each provider stays disabled until its client id, client secret, and redirect URI are set.
-- Optional NOWPayments checkout. Checkout returns `PAYMENT_NOT_CONFIGURED` until the server-side API key is set. Webhook signatures are verified with the IPN secret.
+- Optional NOWPayments checkout. Checkout returns `PAYMENT_NOT_CONFIGURED` until the server-side API key is set. Webhook signatures are verified with the IPN secret. Checkout amounts come from CMS plan fees (positive setup/activation amount, otherwise monthly/access price). Catalog seed amounts in code are never charged. CMS-active alone does not make a plan publicly listed or checkout-eligible.
 - A chat route grounded in the site's public content. If the Workers AI binding is missing or the provider fails, the API returns a safe unavailable or handoff response.
 - Sample services, prices, and contact details bundled with the app. Replace them before you use the site with your own visitors.
 
@@ -139,6 +139,8 @@ A production Worker environment should set `ENVIRONMENT` to `production`, `PUBLI
 ## Sample content
 
 Services, solutions, prices, FAQs, and contact details under `src/content/` and in the database migrations are sample content for this edition. They are not your live catalog. Edit them, or replace them through the admin CMS, before inviting visitors.
+
+When you change CMS plan amounts in admin, public pricing cache is invalidated and checkout quotes use the updated CMS selection. Crypto checkout remains a one-time collection; ongoing access disclosures are arranged separately and are not automatic recurring billing.
 
 Legal pages are unpublished until an administrator publishes them. Do not present the bundled drafts as legal advice or as a completed policy.
 

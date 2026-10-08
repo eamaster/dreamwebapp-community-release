@@ -16,6 +16,7 @@ import type { Env } from '../types/env';
 import { createDB } from '../db';
 import * as schema from '../db/schema';
 import { kvGet, KV_KEYS } from '../middleware/cache';
+import { evaluatePlanSale } from './commercial/plan-sale-policy';
 
 interface KnowledgeSite {
     name: string;
@@ -40,6 +41,7 @@ interface KnowledgePricingPlan {
     monthlyPrice: number;
     setupFee?: number | null;
     bestFor: string;
+    checkoutAmountDecimal?: string | null;
 }
 
 interface KnowledgeFAQ {
@@ -124,12 +126,19 @@ async function getPricingPlans(env: Env): Promise<KnowledgePricingPlan[]> {
         .where(eq(schema.pricingPlans.isActive, true))
         .orderBy(asc(schema.pricingPlans.sortOrder));
 
-    return rows.map((row) => ({
-        name: row.name,
-        monthlyPrice: row.monthlyPrice,
-        setupFee: row.setupFee,
-        bestFor: row.bestFor,
-    }));
+    const plans: KnowledgePricingPlan[] = [];
+    for (const row of rows) {
+        const sale = evaluatePlanSale({ planKey: row.id, planRow: row });
+        if (!sale.publicVisible) continue;
+        plans.push({
+            name: row.name,
+            monthlyPrice: row.monthlyPrice,
+            setupFee: row.setupFee,
+            bestFor: row.bestFor,
+            checkoutAmountDecimal: sale.checkoutAmountDecimal,
+        });
+    }
+    return plans;
 }
 
 async function getFAQs(env: Env): Promise<KnowledgeFAQ[]> {
@@ -191,8 +200,14 @@ export async function buildKnowledgeContext(env: Env): Promise<string> {
     if (plans.length > 0) {
         lines.push('PRICING PLANS:');
         for (const p of plans) {
-            const setup = p.setupFee ? `, $${p.setupFee} setup fee` : '';
-            lines.push(`- ${p.name}: $${p.monthlyPrice}/month${setup} — best for: ${p.bestFor}`);
+            const due = p.checkoutAmountDecimal
+                ? `$${p.checkoutAmountDecimal} due at checkout (one-time)`
+                : 'checkout amount not currently available';
+            const ongoing =
+                Number(p.monthlyPrice) > 0
+                    ? `; ongoing access $${p.monthlyPrice}/month arranged separately (not billed automatically)`
+                    : '';
+            lines.push(`- ${p.name}: ${due}${ongoing} — best for: ${p.bestFor}`);
         }
         lines.push('');
     }

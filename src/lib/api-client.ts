@@ -92,6 +92,12 @@ export interface PricingPlanData {
     badge?: string | null;
     highlighted: boolean;
     features: string[];
+    /** Server-selected amount due at checkout (CMS fees); absent on older admin payloads. */
+    checkoutAmountDecimal?: string | null;
+    /** True when sale policy allows crypto checkout right now. */
+    checkoutEligible?: boolean;
+    /** True when sale policy allows public listing (distinct from CMS isActive). */
+    publicVisible?: boolean;
 }
 
 export interface PricingAddonData {

@@ -9,8 +9,13 @@
     "noImplicitOverride": true,
     "types": ["./worker-configuration.d.ts"],
     "outDir": "./dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["../shared/*"]
+    }
   },
-  "include": ["src/**/*.ts", "worker-configuration.d.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.ts", "worker-configuration.d.ts", "../shared/**/*.ts"],
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/__tests__/**"]
 }

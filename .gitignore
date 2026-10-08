@@ -61,3 +61,5 @@ id_ed25519
 
 # Generated temporary files
 worker/scripts/.legal-drafts.sql
+.ci-tmp*
+.ci-tmp-*/

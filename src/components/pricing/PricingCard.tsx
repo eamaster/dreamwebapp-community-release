@@ -2,20 +2,43 @@ import { Link } from 'react-router-dom';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { isCryptoCheckoutSupported } from '@/lib/payment-plans';
+import { selectCmsCheckoutFee } from '@shared/cms-checkout-amount';
+import { CATALOG_DISPLAY_CURRENCY, formatMoneyAmount } from '@shared/monetary-display';
+import { buildCryptoCheckoutPath } from '@shared/checkout-route';
 import type { PricingPlanData } from '@/lib/api-client';
 
 export interface PricingCardProps {
     plan: PricingPlanData;
 }
 
+function dueAtCheckoutLabel(plan: PricingPlanData): string | null {
+    if (plan.checkoutAmountDecimal && Number(plan.checkoutAmountDecimal) > 0) {
+        return formatMoneyAmount(plan.checkoutAmountDecimal, CATALOG_DISPLAY_CURRENCY);
+    }
+    const selected = selectCmsCheckoutFee(plan);
+    if (selected == null || !Number.isFinite(Number(selected)) || Number(selected) <= 0) {
+        return null;
+    }
+    return formatMoneyAmount(Number(selected).toFixed(2), CATALOG_DISPLAY_CURRENCY);
+}
+
+function ongoingAccessDecimal(monthlyPrice: number): string | null {
+    if (!Number.isFinite(monthlyPrice) || monthlyPrice <= 0) return null;
+    return monthlyPrice.toFixed(2);
+}
+
 /**
  * Pricing Card component
  * Displays pricing plan with features and CTA.
- * Includes a "Pay with crypto" button rendered ONLY for plans explicitly supported by the backend catalog.
+ * Checkout amount uses the same CMS fee selection as the server quote.
+ * Ongoing access (monthly) is disclosed separately and is not implied as automatic billing.
  */
 export function PricingCard({ plan }: PricingCardProps) {
-    // Strictly check against the explicit supported crypto plan configuration
     const isCryptoSupported = isCryptoCheckoutSupported(plan.id);
+    const canCheckout = Boolean(isCryptoSupported && (plan.checkoutEligible ?? true));
+    const dueLabel = dueAtCheckoutLabel(plan);
+    const ongoing = ongoingAccessDecimal(plan.monthlyPrice);
+    const setupWins = Number(plan.setupFee ?? 0) > 0;
 
     return (
         <Card
@@ -24,7 +47,6 @@ export function PricingCard({ plan }: PricingCardProps) {
                 plan.highlighted ? 'ring-2 ring-brand-500 shadow-2xl scale-105' : ''
             }`}
         >
-            {/* Badge for highlighted plan */}
             {plan.badge && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <span className="badge badge-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide shadow-lg">
@@ -33,41 +55,30 @@ export function PricingCard({ plan }: PricingCardProps) {
                 </div>
             )}
 
-            {/* Plan Name and Description */}
             <div className="mb-6">
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
                 <p className="text-slate-600">{plan.description}</p>
             </div>
 
-            {/* Pricing */}
             <div className="mb-6">
-                {plan.monthlyPrice > 0 ? (
+                {dueLabel ? (
                     <>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-5xl font-bold gradient-text">
-                                ${plan.monthlyPrice}
-                            </span>
-                            <span className="text-slate-500 text-lg">/month</span>
+                            <span className="text-5xl font-bold gradient-text">{dueLabel}</span>
                         </div>
-                        {plan.setupFee && plan.setupFee > 0 && (
-                            <p className="text-sm text-slate-600 mt-2">
-                                + ${plan.setupFee.toLocaleString()} setup fee
+                        <p className="text-sm text-slate-600 mt-2">Due at checkout (one-time)</p>
+                        {setupWins && ongoing && (
+                            <p className="text-sm text-slate-600 mt-1">
+                                Ongoing access {formatMoneyAmount(ongoing, CATALOG_DISPLAY_CURRENCY)}/month,
+                                arranged separately — not charged automatically.
                             </p>
                         )}
                     </>
                 ) : (
-                    <>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-5xl font-bold gradient-text">
-                                ${plan.setupFee?.toLocaleString()}
-                            </span>
-                        </div>
-                        <p className="text-sm text-slate-600 mt-2">One-time setup</p>
-                    </>
+                    <p className="text-sm text-slate-600">Checkout amount not available for this plan.</p>
                 )}
             </div>
 
-            {/* Best For */}
             <div className="mb-6 p-4 bg-brand-50 rounded-lg border border-brand-100">
                 <p className="text-xs font-semibold text-brand-600 uppercase tracking-wide mb-1">
                     Best For
@@ -75,7 +86,6 @@ export function PricingCard({ plan }: PricingCardProps) {
                 <p className="text-sm text-slate-700">{plan.bestFor}</p>
             </div>
 
-            {/* Features */}
             <div className="mb-8 flex-1">
                 <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-4">
                     Everything Included
@@ -102,7 +112,6 @@ export function PricingCard({ plan }: PricingCardProps) {
                 </ul>
             </div>
 
-            {/* CTA Buttons */}
             <div className="space-y-3">
                 <Button
                     variant={plan.highlighted ? 'accent' : 'primary'}
@@ -112,9 +121,9 @@ export function PricingCard({ plan }: PricingCardProps) {
                     {plan.ctaText}
                 </Button>
 
-                {isCryptoSupported && (
+                {canCheckout && dueLabel && (
                     <Link
-                        to={`/checkout/crypto?plan=${encodeURIComponent(plan.id)}`}
+                        to={buildCryptoCheckoutPath(plan.id)}
                         className="block w-full"
                     >
                         <Button

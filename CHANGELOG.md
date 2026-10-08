@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Crypto checkout and public pricing now charge and display CMS-selected fees (positive setup/activation amount, otherwise monthly/access price). Deploy-time catalog seed amounts are never charged.
+- Public pricing listing applies a community sale policy so CMS-active alone does not imply public availability or checkout eligibility.
+- Added reviewed `shared/` modules (`cms-checkout-amount`, `monetary-display`, `checkout-route`) with consistent `@shared` resolution for Vite, TypeScript, Vitest, and Wrangler.
+
 ### Security
 - Production frontend builds require `VITE_API_BASE_URL` and do not fall back to a built-in API host.
 - Customer password-reset links use the operator-configured application origin.
@@ -18,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced the setup guide with self-hosting instructions for this repository.
 - Documented that GitHub Actions runs checks only. Deployment stays opt-in on the operator's own Cloudflare account.
 - Licensed the community edition under Apache License 2.0.
+- Documented CMS checkout-fee authority and the distinction between CMS active, public visibility, and checkout eligibility.
 
 ## [0.1.0] - 2026-08-27
 
