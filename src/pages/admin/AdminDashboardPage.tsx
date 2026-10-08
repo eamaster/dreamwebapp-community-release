@@ -33,6 +33,7 @@ import {
     type AdminCapabilities,
 } from '@/lib/api-client';
 import { formatPhoneDisplay, toTelHref } from '@/lib/phone';
+import { adminPlanPriceSummary } from '@/lib/admin-plan-summary';
 import { env } from '@/config/env';
 
 type TabType = 'overview' | 'services' | 'solutions' | 'pricing' | 'faqs' | 'site' | 'legal' | 'contacts' | 'payments' | 'customers' | 'account';
@@ -598,7 +599,10 @@ export function AdminDashboardPage() {
                                             </div>
                                             <p className="text-sm text-slate-700 admin-break">{p.description}</p>
                                             <p className="text-sm font-medium text-brand-800 admin-break">
-                                                ${p.monthlyPrice}/mo {p.setupFee ? `+ $${p.setupFee} setup` : ''} · Best for: {p.bestFor}
+                                                {adminPlanPriceSummary(p)} · Best for: {p.bestFor}
+                                            </p>
+                                            <p className="text-xs text-slate-500 admin-break">
+                                                CMS active does not by itself mean the plan is publicly listed or checkout-eligible.
                                             </p>
                                         </div>
                                         <ItemActions
@@ -1051,13 +1055,31 @@ export function AdminDashboardPage() {
                                         </Field>
                                     </div>
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                        <Field label="Monthly price ($)">
+                                        <Field label="Ongoing access ($/month, arranged separately)">
                                             <input type="number" className="admin-field" required value={editingItem.data.monthlyPrice} onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, monthlyPrice: Number(e.target.value) } })} />
                                         </Field>
-                                        <Field label="Setup fee ($)">
-                                            <input type="number" className="admin-field" value={editingItem.data.setupFee || ''} onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, setupFee: Number(e.target.value) || undefined } })} />
+                                        <Field label="Amount due at checkout ($)">
+                                            <input
+                                                type="number"
+                                                className="admin-field"
+                                                value={editingItem.data.setupFee ?? ''}
+                                                onChange={(e) => {
+                                                    const raw = e.target.value;
+                                                    setEditingItem({
+                                                        ...editingItem,
+                                                        data: {
+                                                            ...editingItem.data,
+                                                            setupFee: raw.trim() === '' ? null : Number(raw),
+                                                        },
+                                                    });
+                                                }}
+                                            />
                                         </Field>
                                     </div>
+                                    <p className="text-xs text-slate-500">
+                                        Checkout charges a positive setup/activation amount when set; otherwise it charges the ongoing access amount.
+                                        Ongoing access is never billed automatically by crypto checkout.
+                                    </p>
                                     <Field label="Best for">
                                         <input type="text" className="admin-field" required value={editingItem.data.bestFor} onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, bestFor: e.target.value } })} />
                                     </Field>

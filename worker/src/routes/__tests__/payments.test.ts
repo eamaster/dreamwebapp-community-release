@@ -675,13 +675,94 @@ describe('SERVER_CRYPTO_CATALOG consistency & decimal string preservation', () =
         expect((resolved as unknown as Record<string, unknown>)['priceAmount']).toBeUndefined();
     });
 
+    it('prefers CMS/D1 setupFee over Worker catalog seed for checkout amount', async () => {
+        const activePlan = {
+            id: 'starter-bot',
+            name: 'Starter Bot',
+            description: 'Starter Bot Plan Description',
+            monthly_price: 197,
+            setup_fee: 10,
+            badge: null,
+            highlighted: 0,
+            best_for: 'Testing',
+            cta_text: 'Buy',
+            is_active: 1,
+            display_order: 1,
+            features: '[]',
+            created_at: '2026-08-25T12:00:00Z',
+            updated_at: '2026-08-25T12:00:00Z',
+        };
+
+        const mockD1 = createMockD1({ pricing_plans: [activePlan] });
+        const db = createDB(mockD1);
+
+        const resolved = await getPlanPrice(db, 'starter-bot');
+        expect(resolved?.priceAmountDecimal).toBe('10.00');
+        expect(SERVER_CRYPTO_CATALOG['starter-bot']?.priceAmountDecimal).toBe('997.00');
+    });
+
+    it('charges the CMS monthly/access price when setup fee is zero and never the catalog seed', async () => {
+        const activePlan = {
+            id: 'growth-bot',
+            name: 'Growth Bot + Care',
+            description: 'Growth',
+            monthly_price: 197,
+            setup_fee: 0,
+            badge: null,
+            highlighted: 0,
+            best_for: 'Testing',
+            cta_text: 'Buy',
+            is_active: 1,
+            display_order: 1,
+            features: '[]',
+            created_at: '2026-08-25T12:00:00Z',
+            updated_at: '2026-08-25T12:00:00Z',
+        };
+
+        const mockD1 = createMockD1({ pricing_plans: [activePlan] });
+        const db = createDB(mockD1);
+
+        const resolved = await getPlanPrice(db, 'growth-bot');
+        expect(resolved?.priceAmountDecimal).toBe('197.00');
+        expect(resolved?.priceAmountDecimal).not.toBe(
+            SERVER_CRYPTO_CATALOG['growth-bot']?.priceAmountDecimal,
+        );
+    });
+
+    it('rejects checkout when CMS payable amounts are absent or non-positive', async () => {
+        const activePlan = {
+            id: 'starter-bot',
+            name: 'Starter Bot',
+            description: 'Starter',
+            monthly_price: 0,
+            setup_fee: null,
+            badge: null,
+            highlighted: 0,
+            best_for: 'Testing',
+            cta_text: 'Buy',
+            is_active: 1,
+            display_order: 1,
+            features: '[]',
+            created_at: '2026-08-25T12:00:00Z',
+            updated_at: '2026-08-25T12:00:00Z',
+        };
+
+        const mockD1 = createMockD1({ pricing_plans: [activePlan] });
+        const db = createDB(mockD1);
+
+        expect(await getPlanPrice(db, 'starter-bot')).toBeNull();
+    });
+
     it('every supported frontend crypto plan key exists in SERVER_CRYPTO_CATALOG and is active', () => {
         const frontendSupportedKeys = ['starter-bot', 'growth-bot', 'pro-automation'];
         for (const key of frontendSupportedKeys) {
             const config = SERVER_CRYPTO_CATALOG[key];
             expect(config, `Missing server config for ${key}`).toBeDefined();
             expect(config?.isActive, `Server config for ${key} must be active`).toBe(true);
+            expect(config?.checkoutEnabled, `Server config for ${key} must allow checkout`).toBe(true);
+            expect(config?.publicVisible, `Server config for ${key} must be public`).toBe(true);
             expect(config?.billingMode).toBe('one_time');
+            // Seeds remain documented decimal strings but are never the charge authority.
             expect(config?.priceAmountDecimal).toMatch(/^\d+\.\d{2}$/);
         }
     });
@@ -1284,9 +1365,10 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
         };
 
         // Create in-memory DB and authenticated customer
-        const { createInMemoryDB } = await import('./helpers/d1-mock');
+        const { createInMemoryDB, seedPricingPlan } = await import('./helpers/d1-mock');
         const { registerCustomerWithPassword } = await import('../../lib/customer-auth-service');
         const mem = createInMemoryDB();
+        seedPricingPlan(mem.store, { id: 'starter-bot', name: 'Starter Bot', setupFee: 997, monthlyPrice: 0 });
         const drizzle = createDB(mem.db);
 
         const auth = await registerCustomerWithPassword(drizzle, {
@@ -1324,9 +1406,10 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
     });
 
     it('rejects checkout creation with 422 when payCurrency is allowlisted but unavailable from provider', async () => {
-        const { createInMemoryDB } = await import('./helpers/d1-mock');
+        const { createInMemoryDB, seedPricingPlan } = await import('./helpers/d1-mock');
         const { registerCustomerWithPassword } = await import('../../lib/customer-auth-service');
         const mem = createInMemoryDB();
+        seedPricingPlan(mem.store, { id: 'starter-bot', name: 'Starter Bot', setupFee: 997, monthlyPrice: 0 });
         const drizzle = createDB(mem.db);
 
         const auth = await registerCustomerWithPassword(drizzle, {
@@ -1367,9 +1450,10 @@ describe('Authenticated Checkout & Ownership Enforcement Suite', () => {
     });
 
     it('successfully creates order and hosted invoice when plan, allowlisted currency, and auth are valid', async () => {
-        const { createInMemoryDB } = await import('./helpers/d1-mock');
+        const { createInMemoryDB, seedPricingPlan } = await import('./helpers/d1-mock');
         const { registerCustomerWithPassword } = await import('../../lib/customer-auth-service');
         const mem = createInMemoryDB();
+        seedPricingPlan(mem.store, { id: 'starter-bot', name: 'Starter Bot', setupFee: 997, monthlyPrice: 0 });
         const drizzle = createDB(mem.db);
 
         const auth = await registerCustomerWithPassword(drizzle, {

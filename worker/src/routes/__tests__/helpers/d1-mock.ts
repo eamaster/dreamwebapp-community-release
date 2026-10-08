@@ -17,6 +17,34 @@ export interface MockStore {
     customerServices: schema.CustomerServiceRow[];
     paymentOrders: Record<string, unknown>[];
     paymentEvents: Record<string, unknown>[];
+    pricingPlans: schema.PricingPlanRow[];
+}
+
+/** Seed a community catalog plan so CMS fee selection can resolve checkout amounts. */
+export function seedPricingPlan(
+    store: MockStore,
+    overrides: Partial<schema.PricingPlanRow> & { id: string },
+): schema.PricingPlanRow {
+    const now = '2026-01-01T00:00:00.000Z';
+    const row: schema.PricingPlanRow = {
+        id: overrides.id,
+        name: overrides.name ?? overrides.id,
+        description: overrides.description ?? 'Test plan',
+        monthlyPrice: overrides.monthlyPrice ?? 0,
+        setupFee: overrides.setupFee ?? 997,
+        bestFor: overrides.bestFor ?? 'Testing',
+        ctaText: overrides.ctaText ?? 'Buy',
+        badge: overrides.badge ?? null,
+        isHighlighted: overrides.isHighlighted ?? false,
+        isActive: overrides.isActive ?? true,
+        featuresJson: overrides.featuresJson ?? '[]',
+        sortOrder: overrides.sortOrder ?? 1,
+        createdAt: overrides.createdAt ?? now,
+        updatedAt: overrides.updatedAt ?? now,
+    };
+    store.pricingPlans = store.pricingPlans.filter((p) => p.id !== row.id);
+    store.pricingPlans.push(row);
+    return row;
 }
 
 export function extractSelectedColumns(sql: string): string[] | null {
@@ -71,6 +99,7 @@ export function createInMemoryDB(): { db: D1Database; store: MockStore } {
         customerServices: [],
         paymentOrders: [],
         paymentEvents: [],
+        pricingPlans: [],
     };
 
     const mockD1: D1Database = {
@@ -323,6 +352,18 @@ export function createInMemoryDB(): { db: D1Database; store: MockStore } {
                         let items = store.paymentOrders;
                         if (userIdParam) { items = items.filter((o) => o.userId === userIdParam); }
                         if (orderIdParam) { items = items.filter((o) => o.orderId === orderIdParam); }
+                        if (qLower.includes('count(')) {
+                            return { results: [{ count: items.length }], success: true, meta: {} };
+                        }
+                        return { results: items, success: true, meta: {} };
+                    }
+
+                    if (qLower.includes('from "pricing_plans"')) {
+                        const idParam = boundParams.find((p) => typeof p === 'string');
+                        let items = store.pricingPlans;
+                        if (idParam && qLower.includes('where')) {
+                            items = items.filter((p) => p.id === idParam);
+                        }
                         if (qLower.includes('count(')) {
                             return { results: [{ count: items.length }], success: true, meta: {} };
                         }

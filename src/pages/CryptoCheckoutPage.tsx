@@ -22,12 +22,26 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { usePricing } from '@/hooks/useContent';
 import { usePaymentCurrencies } from '@/hooks/usePayment';
 import { isCryptoCheckoutSupported } from '@/lib/payment-plans';
+import { selectCmsCheckoutFee } from '@shared/cms-checkout-amount';
+import { CATALOG_DISPLAY_CURRENCY, formatMoneyAmount } from '@shared/monetary-display';
 import {
     createCheckout,
     isValidNowPaymentsInvoiceUrl,
     isApiError,
     type PaymentCurrencyData,
+    type PricingPlanData,
 } from '@/lib/api-client';
+
+function dueAtCheckoutDisplay(plan: PricingPlanData): string | null {
+    if (plan.checkoutAmountDecimal && Number(plan.checkoutAmountDecimal) > 0) {
+        return formatMoneyAmount(plan.checkoutAmountDecimal, CATALOG_DISPLAY_CURRENCY);
+    }
+    const selected = selectCmsCheckoutFee(plan);
+    if (selected == null || !Number.isFinite(Number(selected)) || Number(selected) <= 0) {
+        return null;
+    }
+    return formatMoneyAmount(Number(selected).toFixed(2), CATALOG_DISPLAY_CURRENCY);
+}
 
 export function CryptoCheckoutPage() {
     const [searchParams] = useSearchParams();
@@ -53,6 +67,11 @@ export function CryptoCheckoutPage() {
     }, [pricingData, planKey]);
 
     const isSupportedPlan = isCryptoCheckoutSupported(planKey);
+    const canCheckoutPlan =
+        isSupportedPlan &&
+        Boolean(resolvedPlan) &&
+        (resolvedPlan?.checkoutEligible ?? true) &&
+        Boolean(resolvedPlan && dueAtCheckoutDisplay(resolvedPlan));
 
     // Group approved currencies into Popular Coins and Stablecoins
     const { popularCurrencies, stablecoins } = useMemo(() => {
@@ -74,7 +93,7 @@ export function CryptoCheckoutPage() {
 
     // Handle payment submission
     const handleProceedToPayment = async () => {
-        if (!selectedCurrency || isSubmitting || !resolvedPlan || !isSupportedPlan) return;
+        if (!selectedCurrency || isSubmitting || !resolvedPlan || !canCheckoutPlan) return;
 
         setIsSubmitting(true);
         setErrorMessage(null);
@@ -108,7 +127,8 @@ export function CryptoCheckoutPage() {
         window.location.pathname + (window.location.search || ''),
     );
 
-    const canSubmit = Boolean(selectedCurrency) && !isSubmitting && !currenciesLoading && Boolean(resolvedPlan);
+    const canSubmit =
+        Boolean(selectedCurrency) && !isSubmitting && !currenciesLoading && canCheckoutPlan;
 
     return (
         <Section padding="lg" className="bg-slate-50/50 min-h-[calc(100vh-80px)]">
@@ -186,9 +206,11 @@ export function CryptoCheckoutPage() {
                                             </div>
                                             <div className="sm:text-right flex-shrink-0">
                                                 <span className="text-3xl font-extrabold text-slate-900">
-                                                    ${resolvedPlan.setupFee ?? resolvedPlan.monthlyPrice}
+                                                    {dueAtCheckoutDisplay(resolvedPlan) ?? '—'}
                                                 </span>
-                                                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">USD Total</span>
+                                                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
+                                                    Due at checkout (USD)
+                                                </span>
                                             </div>
                                         </div>
 
@@ -196,7 +218,10 @@ export function CryptoCheckoutPage() {
                                             <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                             </svg>
-                                            <span>Price is verified and server-authoritative from DreamWebApp catalog.</span>
+                                            <span>
+                                                Displayed amount uses the same CMS fee selection the server charges at checkout.
+                                                Ongoing access, if any, is arranged separately and is not billed automatically here.
+                                            </span>
                                         </div>
                                     </div>
                                 )

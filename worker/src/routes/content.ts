@@ -19,6 +19,7 @@ import * as schema from '../db/schema';
 import { kvGet, kvSet, KV_KEYS, CACHE_CONTROL } from '../middleware/cache';
 import { normalizeSocialLinks } from '../lib/social-links';
 import { assetUrl, isAllowedLogoType } from '../lib/media-assets';
+import { evaluatePlanSale } from '../lib/commercial/plan-sale-policy';
 
 type AppContext = { Bindings: Env; Variables: HonoVariables };
 
@@ -52,7 +53,10 @@ function parseSolution(row: schema.SolutionRow) {
     };
 }
 
-function parsePricingPlan(row: schema.PricingPlanRow) {
+function parsePricingPlan(
+    row: schema.PricingPlanRow,
+    sale?: { checkoutAmountDecimal: string | null; checkoutEligible: boolean; publicVisible: boolean },
+) {
     return {
         id: row.id,
         name: row.name,
@@ -64,6 +68,12 @@ function parsePricingPlan(row: schema.PricingPlanRow) {
         badge: row.badge,
         highlighted: row.isHighlighted,
         features: JSON.parse(row.featuresJson) as string[],
+        /** Server-selected amount due at checkout (CMS fees); null when unavailable. */
+        checkoutAmountDecimal: sale?.checkoutAmountDecimal ?? null,
+        /** True only when sale policy allows crypto checkout right now. */
+        checkoutEligible: sale?.checkoutEligible ?? false,
+        /** True when sale policy allows public listing (distinct from CMS isActive). */
+        publicVisible: sale?.publicVisible ?? false,
     };
 }
 
@@ -291,8 +301,17 @@ contentRouter.get('/pricing', async (c) => {
             .orderBy(asc(schema.pricingAddons.sortOrder)),
     ]);
 
+    // CMS isActive alone is not public availability — apply community sale policy.
+    const publicPlans = planRows
+        .map((row) => {
+            const sale = evaluatePlanSale({ planKey: row.id, planRow: row });
+            return { row, sale };
+        })
+        .filter(({ sale }) => sale.publicVisible)
+        .map(({ row, sale }) => parsePricingPlan(row, sale));
+
     const data = {
-        plans: planRows.map(parsePricingPlan),
+        plans: publicPlans,
         addons: addonRows.map((row) => ({
             id: row.id,
             name: row.name,
