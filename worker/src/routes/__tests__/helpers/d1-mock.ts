@@ -30,8 +30,11 @@ export function seedPricingPlan(
         id: overrides.id,
         name: overrides.name ?? overrides.id,
         description: overrides.description ?? 'Test plan',
-        monthlyPrice: overrides.monthlyPrice ?? 0,
-        setupFee: overrides.setupFee ?? 997,
+        monthlyPrice: overrides.monthlyPrice !== undefined ? overrides.monthlyPrice : 0,
+        // Preserve explicit null; only default when the caller omits setupFee.
+        setupFee: Object.prototype.hasOwnProperty.call(overrides, 'setupFee')
+            ? (overrides.setupFee ?? null)
+            : 997,
         bestFor: overrides.bestFor ?? 'Testing',
         ctaText: overrides.ctaText ?? 'Buy',
         badge: overrides.badge ?? null,

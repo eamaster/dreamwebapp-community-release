@@ -37,8 +37,10 @@ PAYMENT_CANCEL_URL=http://localhost:5173/payment/return
 # ── Customer OAuth Integrations — optional ────────────────────────────────────
 # CUSTOMER_AUTH_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 # CUSTOMER_AUTH_GOOGLE_CLIENT_SECRET=replace_me
-# CUSTOMER_AUTH_GOOGLE_REDIRECT_URI=http://localhost:5173/api/v1/auth/oauth/google/callback
+# Redirect URIs must hit the Worker API origin (local default :8787), not the Vite :5173 origin,
+# unless you deliberately proxy /api to the Worker.
+# CUSTOMER_AUTH_GOOGLE_REDIRECT_URI=http://localhost:8787/api/v1/auth/oauth/google/callback
 
 # CUSTOMER_AUTH_X_CLIENT_ID=your-x-client-id
 # CUSTOMER_AUTH_X_CLIENT_SECRET=replace_me
-# CUSTOMER_AUTH_X_REDIRECT_URI=http://localhost:5173/api/v1/auth/oauth/x/callback
+# CUSTOMER_AUTH_X_REDIRECT_URI=http://localhost:8787/api/v1/auth/oauth/x/callback

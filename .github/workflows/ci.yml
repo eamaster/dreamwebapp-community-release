@@ -31,8 +31,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Typecheck
+      - name: Typecheck frontend
         run: npm run typecheck
+
+      - name: Typecheck worker
+        # Uses checked-in worker types; does not require Cloudflare credentials.
+        run: npm run typecheck:tsc --prefix worker
 
       - name: Test
         run: npm run test:all
